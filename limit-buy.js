@@ -1,25 +1,13 @@
 #!/usr/bin/env node
 
+const client = require("./config").client;
 const argv = require("yargs").argv;
-const nconf = require("nconf");
-const Binance = require("binance-api-node").default;
-
-nconf.env();
-
-if (!nconf.get("APIKEY")) throw Error("APIKEY required!");
-if (!nconf.get("APISECRET")) throw Error("APISECRET required!");
 
 if (!argv.risk) throw Error("--risk required!");
 if (!argv.base) throw Error("--base required!");
 if (!argv.quote) { argv.quote = "BTC";}
 if (!argv.price) throw Error("--price required!");
 if (!argv.stopPrice) throw Error("--stopPrice required!");
-
-// Authenticated client, can make signed calls
-const client = Binance({
-  apiKey: nconf.get("APIKEY"),
-  apiSecret: nconf.get("APISECRET")
-});
 
 (async function() {
   try {
@@ -64,7 +52,7 @@ const client = Binance({
         price: argv.price
       };
       console.log("Order", order)
-      // console.log(await client.order(order));
+      console.log(await client.order(order));
     }
 
   } catch (e) {

@@ -1,13 +1,8 @@
 #!/usr/bin/env node
 
+const client = require("./config").client;
 const argv = require("yargs").argv;
-const nconf = require("nconf");
-const Binance = require("binance-api-node").default;
-
-nconf.env();
-
-if (!nconf.get("APIKEY")) throw Error("APIKEY required!");
-if (!nconf.get("APISECRET")) throw Error("APISECRET required!");
+const lib = require("./lib");
 
 if (!argv.base) throw Error("--base required!");
 if (!argv.quote) {
@@ -16,65 +11,27 @@ if (!argv.quote) {
 if (!argv.stopPrice) throw Error("--stopPrice required!");
 if (!argv.price) throw Error("--price required!");
 
-// Authenticated client, can make signed calls
-const client = Binance({
-  apiKey: nconf.get("APIKEY"),
-  apiSecret: nconf.get("APISECRET")
-});
-
-async function assetValue(base) {
-  const accountInfo = await client.accountInfo();
-  const baseBalance = accountInfo.balances.filter(base => {
-    return base.asset === argv.base;
-  })[0];
-  return ({ asset, free, locked } = baseBalance);
-}
-
-function pause(ms) {
-  console.log("Pausing for", ms, "ms");
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve();
-    }, ms);
-  });
-}
-
 (async function() {
   try {
     console.log(`\n==> STOP LOSS <==\n`);
 
     // get all open orders with locked asset value
-    let base = await assetValue(argv.base);
-    console.log("Base", base.asset);
-    console.log("Free", base.free);
-    console.log("Locked", base.locked);
+    let base = await lib.assetValue(client, argv.base);
+    lib.printAssetValue(base)
 
     // cancel the open orders with locked values
     if (parseFloat(base.locked) !== 0) {
-      console.log("Canceling Open Orders...");
-      const openOrders = await client.openOrders({
-        symbol: argv.base + argv.quote
-      });
-      for (const openOrder of openOrders) {
-        console.log("Cancel Order ID:", openOrder.orderId);
-        console.log(
-          await client.cancelOrder({
-            symbol: argv.base + argv.quote,
-            orderId: openOrder.orderId
-          })
-        );
-      }
-      await pause(5000);
+      await lib.cancelOpenOrders(client, argv.base)
+      // wait a few seconds for binance to complete the order cancelation and update balances
+      await lib.pause(5000)
     }
 
     // place stop loss order
-    console.log("Place Stop Loss Order...");
+    console.log("\n==> Place Stop Loss Order...");
 
     // get all open orders with locked asset value
-    base = await assetValue(argv.base);
-    console.log("Base", base.asset);
-    console.log("Free", base.free);
-    console.log("Locked", base.locked);
+    base = await lib.assetValue(client, argv.base);
+    lib.printAssetValue(base)
 
     const order = {
       symbol: argv.base + argv.quote,
@@ -84,7 +41,7 @@ function pause(ms) {
       stopPrice: argv.stopPrice,
       price: argv.price
     };
-    console.log("Order:", order);
+    console.log("\nOrder:", order);
     console.log(await client.order(order));
   } catch (e) {
     console.log("==> Error");
