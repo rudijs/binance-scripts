@@ -3,7 +3,8 @@ module.exports = {
   cancelOpenOrders,
   assetValue,
   printAssetValue,
-  pause
+  pause,
+  symbolInfo
 };
 
 async function accountInfo(client) {
@@ -72,4 +73,23 @@ async function pause(ms) {
       resolve();
     }, ms);
   });
+}
+
+function symbolInfo(src, symbol) {
+  const data = src.symbols.filter(item => {
+    return item.symbol === symbol;
+  })[0];
+
+  const lotSize = data.filters.filter(item => {
+    return item.filterType === "LOT_SIZE";
+  })[0];
+
+  lotSize.decimals = countDecimals(parseFloat(lotSize.stepSize));
+
+  return { data, lotSize };
+}
+
+function countDecimals(value) {
+  if (Math.floor(value) === value) return 0;
+  return value.toString().split(".")[1].length || 0;
 }

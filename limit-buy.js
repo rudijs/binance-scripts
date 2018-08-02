@@ -2,6 +2,8 @@
 
 const client = require("./config").client;
 const argv = require("yargs").argv;
+const lib = require("./lib");
+const exchangeInfo = require("./exchange-info");
 
 if (!argv.risk) throw Error("--risk required!");
 if (!argv.base) throw Error("--base required!");
@@ -32,9 +34,12 @@ if (!argv.stopPrice) throw Error("--stopPrice required!");
     console.log("Risk per unit BTC".padEnd(10), "=", riskBTC.toFixed(8));
     console.log("Risk per unit USD".padEnd(10), "=", riskUSD.toFixed(4));
 
+    const symbolExchangeInfo = lib.symbolInfo(exchangeInfo, argv.base + argv.quote);
+
     const unitsBuy = argv.risk / riskUSD;
     console.log("");
-    console.log(`${argv.base} units to buy =`, unitsBuy.toFixed(2));
+    console.log("Risk USD =", argv.risk)
+    console.log(`${argv.base} units to buy =`, unitsBuy.toFixed(symbolExchangeInfo.lotSize.decimals));
 
     const unitsBuyPriceBTC = unitsBuy * prices[argv.base + argv.quote];
     const unitsBuyPriceUSD = unitsBuy * pairUSD;
@@ -48,7 +53,8 @@ if (!argv.stopPrice) throw Error("--stopPrice required!");
         symbol: argv.base + argv.quote,
         side: "BUY",
         type: "LIMIT",
-        quantity: unitsBuy.toFixed(2),
+        // quantity: unitsBuy.toFixed(2),
+        quantity: unitsBuy,
         price: argv.price
       };
       console.log("Order", order)

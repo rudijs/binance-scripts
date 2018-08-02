@@ -3,6 +3,7 @@
 const client = require("./config").client;
 const argv = require("yargs").argv;
 const lib = require("./lib");
+const exchangeInfo = require("./exchange-info");
 
 if (!argv.base) throw Error("--base required!");
 if (!argv.quote) {
@@ -33,11 +34,23 @@ if (!argv.price) throw Error("--price required!");
     base = await lib.assetValue(client, argv.base);
     lib.printAssetValue(base)
 
+    const symbolExchangeInfo = lib.symbolInfo(exchangeInfo, argv.base + argv.quote);
+
+    let quantity;
+
+    if (symbolExchangeInfo.lotSize.decimals) {
+      quantity = parseFloat(base.free).toFixed(symbolExchangeInfo.lotSize.decimals)
+    }
+    else {
+      // if only a whole unit (1) can be sold then round down, toFixed() above rounds up.
+      quantity = Math.floor(parseFloat(base.free))
+    }
+
     const order = {
       symbol: argv.base + argv.quote,
       side: "SELL",
       type: "STOP_LOSS_LIMIT",
-      quantity: Math.floor(parseFloat(base.free) * 100) / 100,
+      quantity,
       stopPrice: argv.stopPrice,
       price: argv.price
     };
