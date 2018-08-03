@@ -53,8 +53,7 @@ if (!argv.stopPrice) throw Error("--stopPrice required!");
         symbol: argv.base + argv.quote,
         side: "BUY",
         type: "LIMIT",
-        // quantity: unitsBuy.toFixed(2),
-        quantity: unitsBuy,
+        quantity: unitsBuy.toFixed(symbolExchangeInfo.lotSize.decimals),
         price: argv.price
       };
       console.log("Order", order)
