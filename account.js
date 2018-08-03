@@ -19,7 +19,7 @@ const lib = require("./lib");
     // console.log(accountInfo.openOrderDetails);
     accountInfo.openOrderDetails.forEach(item => {
       console.log("");
-      console.log("Symbol:", item.symbol, "-", item.side);
+      console.log("Symbol:", item.symbol, ":", item.side, ":", item.type);
       console.log("Stop Price:".padEnd(14), item.stopPrice);
       console.log("Price:".padEnd(14), item.price);
       console.log("Orig QTY:".padEnd(14), item.origQty);
