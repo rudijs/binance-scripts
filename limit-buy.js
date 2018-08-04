@@ -7,21 +7,34 @@ const exchangeInfo = require("./exchange-info");
 
 if (!argv.risk) throw Error("--risk required!");
 if (!argv.base) throw Error("--base required!");
-if (!argv.quote) { argv.quote = "BTC";}
+if (!argv.quote) {
+  argv.quote = "BTC";
+}
 if (!argv.price) throw Error("--price required!");
 if (!argv.stopPrice) throw Error("--stopPrice required!");
 
 (async function() {
   try {
-    const prices = await client.prices();
-
     console.log(`\n==> TRADE <==\n`);
+
+    const symbolExchangeInfo = lib.symbolInfo(
+      exchangeInfo,
+      argv.base + argv.quote
+    );
+
+    // check price and stopPrice does not exceed tick size (number or decimal places)
+    lib.checkTickSize(argv.price, 'price', symbolExchangeInfo.priceFilter) 
+    lib.checkTickSize(argv.stopPrice, 'stopPrice', symbolExchangeInfo.priceFilter) 
+
+    const prices = await client.prices();
 
     console.log(`BTCUSDT = ${prices["BTCUSDT"]}`);
 
     console.log("");
     console.log(`${argv.base} BTC = ${prices[argv.base + argv.quote]}`);
-    const pairUSD = (prices["BTCUSDT"] * prices[argv.base + argv.quote]).toFixed(5);
+    const pairUSD = (
+      prices["BTCUSDT"] * prices[argv.base + argv.quote]
+    ).toFixed(5);
     console.log(`${argv.base} USD = ${pairUSD}`);
 
     console.log("");
@@ -34,21 +47,28 @@ if (!argv.stopPrice) throw Error("--stopPrice required!");
     console.log("Risk per unit BTC".padEnd(10), "=", riskBTC.toFixed(8));
     console.log("Risk per unit USD".padEnd(10), "=", riskUSD.toFixed(4));
 
-    const symbolExchangeInfo = lib.symbolInfo(exchangeInfo, argv.base + argv.quote);
-
     const unitsBuy = argv.risk / riskUSD;
     console.log("");
-    console.log("Risk USD =", argv.risk)
-    console.log(`${argv.base} units to buy =`, unitsBuy.toFixed(symbolExchangeInfo.lotSize.decimals));
+    console.log("Risk USD =", argv.risk);
+    console.log(
+      `${argv.base} units to buy =`,
+      unitsBuy.toFixed(symbolExchangeInfo.lotSize.decimals)
+    );
 
     const unitsBuyPriceBTC = unitsBuy * prices[argv.base + argv.quote];
     const unitsBuyPriceUSD = unitsBuy * pairUSD;
     console.log("");
-    console.log(`${argv.base} units to buy cost BTC =`, unitsBuyPriceBTC.toFixed(8));
-    console.log(`${argv.base} units to buy cost USD =`, unitsBuyPriceUSD.toFixed(3));
+    console.log(
+      `${argv.base} units to buy cost BTC =`,
+      unitsBuyPriceBTC.toFixed(8)
+    );
+    console.log(
+      `${argv.base} units to buy cost USD =`,
+      unitsBuyPriceUSD.toFixed(3)
+    );
     console.log("");
 
-    if (argv.order) { 
+    if (argv.order) {
       const order = {
         symbol: argv.base + argv.quote,
         side: "BUY",
@@ -56,10 +76,9 @@ if (!argv.stopPrice) throw Error("--stopPrice required!");
         quantity: unitsBuy.toFixed(symbolExchangeInfo.lotSize.decimals),
         price: argv.price
       };
-      console.log("Order", order)
+      console.log("Order", order);
       console.log(await client.order(order));
     }
-
   } catch (e) {
     console.log("==> Error");
     console.log(e);

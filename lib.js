@@ -4,7 +4,8 @@ module.exports = {
   assetValue,
   printAssetValue,
   pause,
-  symbolInfo
+  symbolInfo,
+  checkTickSize
 };
 
 async function accountInfo(client) {
@@ -86,10 +87,26 @@ function symbolInfo(src, symbol) {
 
   lotSize.decimals = countDecimals(parseFloat(lotSize.stepSize));
 
-  return { data, lotSize };
+  const priceFilter = data.filters.filter(item => {
+    return item.filterType === "PRICE_FILTER";
+  })[0];
+
+  priceFilter.decimals = countDecimals(parseFloat(priceFilter.tickSize));
+
+  return { data, lotSize, priceFilter };
 }
 
 function countDecimals(value) {
   if (Math.floor(value) === value) return 0;
   return value.toString().split(".")[1].length || 0;
+}
+
+function checkTickSize(price, type, priceFilter) {
+  // check price does not exceed tick size (number or decimal places)
+  if (countDecimals(price) > priceFilter.decimals) {
+    const msg = `${type} tick size exceeded. Tick Size: ${
+      priceFilter.tickSize
+    } (${priceFilter.decimals} decimal places)`;
+    throw new Error(msg);
+  }
 }

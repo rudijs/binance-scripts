@@ -16,6 +16,12 @@ if (!argv.price) throw Error("--price required!");
   try {
     console.log(`\n==> STOP LOSS <==\n`);
 
+    const symbolExchangeInfo = lib.symbolInfo(exchangeInfo, argv.base + argv.quote);
+
+    // check price and stopPrice does not exceed tick size (number or decimal places)
+    lib.checkTickSize(argv.price, 'price', symbolExchangeInfo.priceFilter) 
+    lib.checkTickSize(argv.stopPrice, 'stopPrice', symbolExchangeInfo.priceFilter) 
+
     // get all open orders with locked asset value
     let base = await lib.assetValue(client, argv.base);
     lib.printAssetValue(base)
@@ -34,7 +40,6 @@ if (!argv.price) throw Error("--price required!");
     base = await lib.assetValue(client, argv.base);
     lib.printAssetValue(base)
 
-    const symbolExchangeInfo = lib.symbolInfo(exchangeInfo, argv.base + argv.quote);
 
     let quantity;
 
