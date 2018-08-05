@@ -97,8 +97,13 @@ function symbolInfo(src, symbol) {
 }
 
 function countDecimals(value) {
-  if (Math.floor(value) === value) return 0;
-  return value.toString().split(".")[1].length || 0;
+  let sats = value
+  // check if large number (exponential) and convert to sats. Ex 1e-7 to 0.00000001
+  if (sats.toString().match('e-') != null ) {
+    sats = value.toFixed(8)
+  }
+  if (Math.floor(sats) === sats) return 0;
+  return sats.toString().split(".")[1].length || 0;
 }
 
 function checkTickSize(price, type, priceFilter) {
