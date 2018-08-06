@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const questions = require("./questions");
 const client = require("./config").client;
 const argv = require("yargs").argv;
 const lib = require("./lib");
@@ -23,8 +24,12 @@ if (!argv.stopPrice) throw Error("--stopPrice required!");
     );
 
     // check price and stopPrice does not exceed tick size (number or decimal places)
-    lib.checkTickSize(argv.price, 'price', symbolExchangeInfo.priceFilter) 
-    lib.checkTickSize(argv.stopPrice, 'stopPrice', symbolExchangeInfo.priceFilter) 
+    lib.checkTickSize(argv.price, "price", symbolExchangeInfo.priceFilter);
+    lib.checkTickSize(
+      argv.stopPrice,
+      "stopPrice",
+      symbolExchangeInfo.priceFilter
+    );
 
     const prices = await client.prices();
 
@@ -77,8 +82,17 @@ if (!argv.stopPrice) throw Error("--stopPrice required!");
         price: argv.price
       };
       console.log("Order", order);
-      console.log(await client.order(order));
+
+      const confirmOrder = await questions.confirmOrder();
+
+      if (confirmOrder === "y") {
+        console.log(await client.order(order));
+      } else {
+        console.log("\n==> Order not placed.");
+      }
     }
+
+    questions.rl.close()
   } catch (e) {
     console.log("==> Error");
     console.log(e);
