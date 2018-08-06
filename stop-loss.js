@@ -29,17 +29,17 @@ if (!argv.price) throw Error("--price required!");
     // cancel the open orders with locked values
     if (parseFloat(base.locked) !== 0) {
       await lib.cancelOpenOrders(client, argv.base)
+      
       // wait a few seconds for binance to complete the order cancelation and update balances
       await lib.pause(5000)
+
+      // get all open orders with locked asset value
+      base = await lib.assetValue(client, argv.base);
+      lib.printAssetValue(base)
     }
 
     // place stop loss order
     console.log("\n==> Place Stop Loss Order...");
-
-    // get all open orders with locked asset value
-    base = await lib.assetValue(client, argv.base);
-    lib.printAssetValue(base)
-
 
     let quantity;
 
