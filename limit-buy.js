@@ -11,12 +11,22 @@ if (!argv.base) throw Error("--base required!");
 if (!argv.quote) {
   argv.quote = "BTC";
 }
-if (!argv.price) throw Error("--price required!");
-if (!argv.stopPrice) throw Error("--stopPrice required!");
+if (!argv.price && !argv.current) throw Error("--price or --current required!");
+if (!argv.stopPrice && !argv.sats)
+  throw Error("--stopPrice or --sats required!");
 
 (async function() {
   try {
     console.log(`\n==> TRADE <==\n`);
+
+    const prices = await client.prices();
+
+    if (argv.current) {
+      argv.price = parseFloat(prices[argv.base + argv.quote]);
+    }
+    if (argv.sats) {
+      argv.stopPrice = (argv.price - argv.sats * 0.00000001).toFixed(8);
+    }
 
     const symbolExchangeInfo = lib.symbolInfo(
       exchangeInfo,
@@ -30,8 +40,6 @@ if (!argv.stopPrice) throw Error("--stopPrice required!");
       "stopPrice",
       symbolExchangeInfo.priceFilter
     );
-
-    const prices = await client.prices();
 
     console.log(`BTCUSDT = ${prices["BTCUSDT"]}`);
 
@@ -92,7 +100,7 @@ if (!argv.stopPrice) throw Error("--stopPrice required!");
       }
     }
 
-    questions.rl.close()
+    questions.rl.close();
   } catch (e) {
     console.log("==> Error");
     console.log(e);
