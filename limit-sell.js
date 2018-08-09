@@ -7,7 +7,7 @@ const lib = require("./lib");
 const exchangeInfo = require("./exchange-info");
 
 if (!argv.base) throw Error("--base required!");
-if (!argv.price) throw Error("--price required!");
+if (!argv.price && !argv.current) throw Error("--price or --current required!");
 if (!argv.quote) {
   argv.quote = "BTC";
 }
@@ -16,6 +16,12 @@ if (!argv.quote) {
   try {
     console.log(`\n==> LIMIT SELL <==\n`);
 
+    const prices = await client.prices();
+
+    if (argv.current) {
+      argv.price = parseFloat(prices[argv.base + argv.quote]);
+    }
+
     const symbolExchangeInfo = lib.symbolInfo(
       exchangeInfo,
       argv.base + argv.quote
@@ -23,8 +29,6 @@ if (!argv.quote) {
 
     // check price does not exceed tick size (number or decimal places)
     lib.checkTickSize(argv.price, "price", symbolExchangeInfo.priceFilter);
-
-    const prices = await client.prices();
 
     console.log(`BTCUSDT = ${prices["BTCUSDT"]}`);
 
@@ -37,7 +41,7 @@ if (!argv.quote) {
     console.log(`${argv.base} USD = ${pairUSD}`);
 
     console.log("");
-    console.log("Price".padEnd(10), "=", argv.price);
+    console.log("Price =", argv.price);
 
     // get all open orders with locked asset value
     let base = await lib.assetValue(client, argv.base);
