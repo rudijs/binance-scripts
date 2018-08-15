@@ -56,7 +56,7 @@ if (!argv.quote) {
           await lib.cancelOpenOrders(client, argv.base);
 
           // wait a few seconds for binance to complete the order cancelation and update balances
-          await lib.pause(5000);
+          await lib.pause(2000);
 
           // get updated free asset value
           base = await lib.assetValue(client, argv.base);
@@ -66,9 +66,12 @@ if (!argv.quote) {
         let quantity;
 
         if (symbolExchangeInfo.lotSize.decimals) {
-          quantity = parseFloat(base.free).toFixed(
-            symbolExchangeInfo.lotSize.decimals
-          );
+          // trim decimals as required to meet lotSize specs
+          // quantity = parseFloat(base.free).toFixed(symbolExchangeInfo.lotSize.decimals)
+          // to avoid rounding we do it manually and not with toFixed()
+          const parts = base.free.split(".");
+          const d = parts[1].substring(0, symbolExchangeInfo.lotSize.decimals);
+          quantity = parseFloat([parts[0], d].join("."));
         } else {
           // if only a whole unit (1) can be sold then round down, toFixed() above rounds up.
           quantity = Math.floor(parseFloat(base.free));

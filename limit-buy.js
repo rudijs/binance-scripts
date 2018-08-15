@@ -34,9 +34,13 @@ if (!argv.stopPrice && !argv.sats)
     );
 
     // check price and stopPrice does not exceed tick size (number or decimal places)
-    lib.checkTickSize(argv.price, "price", symbolExchangeInfo.priceFilter);
     lib.checkTickSize(
-      argv.stopPrice,
+      parseFloat(argv.price),
+      "price",
+      symbolExchangeInfo.priceFilter
+    );
+    lib.checkTickSize(
+      parseFloat(argv.stopPrice),
       "stopPrice",
       symbolExchangeInfo.priceFilter
     );
@@ -95,6 +99,8 @@ if (!argv.stopPrice && !argv.sats)
 
       if (confirmOrder === "y") {
         console.log(await client.order(order));
+        console.log("==> Stop Loss Command:");
+        console.log( `\n./stop-loss.js --base ${argv.base} --stopPrice ${ argv.stopPrice } --price ${argv.stopPrice}`);
       } else {
         console.log("\n==> Order not placed.");
       }
